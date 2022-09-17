@@ -1,0 +1,134 @@
+cabal-version: 2.4
+
+name:        bitmaps
+category:    Data
+version:     1.0.0
+synopsis:    TODO 
+description: TODO 
+
+author:       jacob leach
+maintainer:   jacobleach@protonmail.com
+copyright:    2022, Jacob Leach
+homepage:     https://github.com/riz0id/bitmaps
+license:      ISC
+license-file: LICENSE
+build-type:   Simple
+
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:
+  GHC == 9.2.2
+  GHC == 9.0.2
+  GHC == 8.10.7
+
+flag llvm
+  Description: Compile using the LLVM backend.
+  Default:     False
+  Manual:      True
+
+common common
+  default-language: Haskell2010
+
+  default-extensions:
+    BlockArguments ImportQualifiedPost 
+
+  ghc-options:
+    -- `-O0` is explicitly set since none of the functions exported by this 
+    -- library would benefit from higher optimization levels. This helps reduce 
+    -- compile times. 
+    -O2
+
+    -- `-fregs-iterative` enables the iterative graph coloring register 
+    -- allocator. This is hardly affects compile times and can produce code with
+    -- fewer heap allocations.
+    -fregs-iterative
+
+    -- `-fmax-simplifier-iterations` is set to keep compile times in check. 
+    -- The functions in this library are simple and do not need very many 
+    -- simplifier passes.
+    -fmax-simplifier-iterations=20
+
+    -- Warnings & Sanity checking
+    -Wall
+    -Wcompat
+    -Wcpp-undef
+    -- -Werror
+    -Widentities
+    -Wmissing-export-lists
+
+    -ddump-to-file
+    -ddump-stg-final
+    -ddump-simpl
+    -dsuppress-uniques
+    -dsuppress-module-prefixes
+
+
+  build-depends:
+    , base >= 4.14.3 && < 4.17
+
+library
+  import:         common
+  hs-source-dirs: src
+
+  default-extensions:
+    CPP MagicHash
+
+  if flag(llvm) 
+    ghc-options: -fllvm 
+
+  build-depends:
+    , containers       >= 0.6.5  && < 0.7
+    , deepseq          >= 1.4.6  && < 1.5
+    , ghc-prim         >= 0.6.1  && < 0.9
+    , hashable         >= 1.4.0  && < 1.5
+    , prim-bool        >= 1.0.1  && < 1.1.0
+    , prim-compat      >= 1.0.0  && < 1.1.0
+    , prim-int         >= 1.0.0  && < 1.1.0
+    , template-haskell >= 2.16.0 && < 2.19
+
+  exposed-modules:
+    Data.BitMap
+    Data.BitMap.Prim
+    Data.BitMap.Prim.Unsafe
+    Data.BitMap.Unsafe
+
+  other-modules:
+    Data.BitMap.Core
+    Data.BitMap.Prim.Core
+
+test-suite test
+  import:         common
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Test.hs
+
+  ghc-options:
+    -threaded
+    -rtsopts
+    "-with-rtsopts=-N"
+
+  build-depends:
+    , bitmaps
+    , hedgehog
+    , tasty
+    , tasty-hedgehog 
+
+  other-modules:
+    Test.Compat
+    Test.Core
+    Test.BitMap
+    Test.BitMap.Class
+    Test.BitMap.Class.Bits
+    Test.BitMap.Class.Eq
+    Test.BitMap.Class.Ord
+    Test.BitMap.Construction
+    Test.BitMap.Gen
+    Test.BitMap.List
+    Test.BitMap.Range
+    Test.BitMap.Query
+
+source-repository head
+  type:     git
+  location: https://github.com/riz0id/bitmaps
